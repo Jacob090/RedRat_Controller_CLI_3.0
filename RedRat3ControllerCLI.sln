@@ -1,0 +1,25 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+VisualStudioVersion = 17.10.35122.118
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "RedRat3ControllerCLI", "RedRat3ControllerCLI\RedRat3ControllerCLI.csproj", "{13A273F0-C4BD-4FB0-80C4-60A9940A9FFE}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{13A273F0-C4BD-4FB0-80C4-60A9940A9FFE}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{13A273F0-C4BD-4FB0-80C4-60A9940A9FFE}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{13A273F0-C4BD-4FB0-80C4-60A9940A9FFE}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{13A273F0-C4BD-4FB0-80C4-60A9940A9FFE}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {5616869A-9A14-4955-B37B-F739D2E9645A}
+	EndGlobalSection
+EndGlobal

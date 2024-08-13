@@ -9,7 +9,27 @@ class RedRat3ControllerCLI
     // dict to map keys to ir signal by name
     private static readonly Dictionary<ConsoleKey, string> KeyToIRSignalMap = new Dictionary<ConsoleKey, string>
     {
+        { ConsoleKey.P, "DTV_POWER_K" },
+        { ConsoleKey.S, "DTV_SOURCE_K" },
+        { ConsoleKey.D0, "DTV_0_K" },
+        { ConsoleKey.D1, "DTV_1_K" },
+        { ConsoleKey.D2, "DTV_2_K" },
+        { ConsoleKey.D3, "DTV_3_K" },
+        { ConsoleKey.D4, "DTV_4_K" },
+        { ConsoleKey.D5, "DTV_5_K" },
+        { ConsoleKey.D6, "DTV_6_K" },
+        { ConsoleKey.D7, "DTV_7_K" },
+        { ConsoleKey.D8, "DTV_8_K" },
+        { ConsoleKey.D9, "DTV_9_K" },
+        { ConsoleKey.T, "DTV_TTX_MIX_K" },
         { ConsoleKey.V, "DTV_MUTE_K" },
+        { ConsoleKey.C, "DTV_CH_LIST_K" },
+
+        //{ ConsoleKey., "DTV_VOL_UP_K" },
+        //{ ConsoleKey., "DTV_VOL_DOWN_K" },
+        //{ ConsoleKey., "DTV_CH_UP_K" },
+        //{ ConsoleKey., "DTV_CH_DOWN_K" },
+
         // add more mappings
     };
 

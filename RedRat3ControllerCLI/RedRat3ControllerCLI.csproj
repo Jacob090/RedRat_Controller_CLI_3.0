@@ -8,6 +8,16 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <None Remove="REDRAT.xml" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Content Include="REDRAT.xml">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Content>
+  </ItemGroup>
+
+  <ItemGroup>
     <PackageReference Include="RedRat" Version="6.0.3" />
   </ItemGroup>
 

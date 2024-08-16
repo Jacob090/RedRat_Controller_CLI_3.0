@@ -56,8 +56,17 @@ class RedRat3ControllerCLI
     static void Main(string[] args)
     {
         Console.WriteLine("### RedRat3 Controller ###\n");
+        IRedRat3 rr3;
 
-        using var rr3 = FindRedRat();
+        try
+        {
+            rr3 = FindRedRat();
+        } catch (Exception)
+        {
+            Console.ReadKey();
+            return;
+        }
+
         rr3.Connect();
         var signalDB = Serializer.AvDeviceDbFromXmlFile("REDRAT.xml");
         Console.WriteLine("Database initialised.");

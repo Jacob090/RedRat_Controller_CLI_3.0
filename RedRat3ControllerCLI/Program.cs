@@ -10,7 +10,7 @@ class RedRat3ControllerCLI
     private static readonly Dictionary<ConsoleKey, string> KeyToIRSignalMap = new Dictionary<ConsoleKey, string>
     {
         { ConsoleKey.P, "DTV_POWER_K" },
-        { ConsoleKey.S, "DTV_SOURCE_K" },
+        { ConsoleKey.H, "DTV_SOURCE_K" },
         { ConsoleKey.D0, "DTV_0_K" },
         { ConsoleKey.D1, "DTV_1_K" },
         { ConsoleKey.D2, "DTV_2_K" },
@@ -29,7 +29,7 @@ class RedRat3ControllerCLI
         { ConsoleKey.Add, "DTV_CH_UP_K" },
         { ConsoleKey.Subtract, "DTV_CH_DOWN_K" },
         { ConsoleKey.M, "DTV_MENU_K" },
-        { ConsoleKey.H, "DTV_SMART_K" },
+        { ConsoleKey.S, "DTV_SMART_K" },
         { ConsoleKey.G, "DTV_GUIDE_K" },
         { ConsoleKey.UpArrow, "DTV_UP_K" },
         { ConsoleKey.DownArrow, "DTV_DOWN_K" },

@@ -29,7 +29,7 @@ class RedRat3ControllerCLI
         { ConsoleKey.Add, "DTV_CH_UP_K" },
         { ConsoleKey.Subtract, "DTV_CH_DOWN_K" },
         { ConsoleKey.M, "DTV_MENU_K" },
-        { ConsoleKey.H, "DTV_SMART_K" }, // SMART HUB??
+        { ConsoleKey.H, "DTV_SMART_K" },
         { ConsoleKey.G, "DTV_GUIDE_K" },
         { ConsoleKey.UpArrow, "DTV_UP_K" },
         { ConsoleKey.DownArrow, "DTV_DOWN_K" },
@@ -46,9 +46,9 @@ class RedRat3ControllerCLI
         { ConsoleKey.Q, "SPE_MORE_K" },
         { ConsoleKey.OemComma, "DTV_REWIND_K" },
         { ConsoleKey.OemPeriod, "DTV_FF_K" },
-        { ConsoleKey.O, "DTV_PAUSE_K" },
+        { ConsoleKey.U, "DTV_PAUSE_K" },
         { ConsoleKey.R, "DTV_REC_K" },
-        { ConsoleKey.P, "DTV_PLAY_K" },
+        { ConsoleKey.Y, "DTV_PLAY_K" },
         { ConsoleKey.Z, "DTV_STOP_K" },
         { ConsoleKey.F, "DTV_FACTORY_K" },
     };

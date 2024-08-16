@@ -24,13 +24,33 @@ class RedRat3ControllerCLI
         { ConsoleKey.T, "DTV_TTX_MIX_K" },
         { ConsoleKey.V, "DTV_MUTE_K" },
         { ConsoleKey.C, "DTV_CH_LIST_K" },
-
-        //{ ConsoleKey., "DTV_VOL_UP_K" },
-        //{ ConsoleKey., "DTV_VOL_DOWN_K" },
-        //{ ConsoleKey., "DTV_CH_UP_K" },
-        //{ ConsoleKey., "DTV_CH_DOWN_K" },
-
-        // add more mappings
+        { ConsoleKey.Multiply, "DTV_VOL_UP_K" },
+        { ConsoleKey.Divide, "DTV_VOL_DOWN_K" },
+        { ConsoleKey.Add, "DTV_CH_UP_K" },
+        { ConsoleKey.Subtract, "DTV_CH_DOWN_K" },
+        { ConsoleKey.M, "DTV_MENU_K" },
+        { ConsoleKey.H, "DTV_SMART_K" }, // SMART HUB??
+        { ConsoleKey.G, "DTV_GUIDE_K" },
+        { ConsoleKey.UpArrow, "DTV_UP_K" },
+        { ConsoleKey.DownArrow, "DTV_DOWN_K" },
+        { ConsoleKey.LeftArrow, "DTV_LEFT_K" },
+        { ConsoleKey.RightArrow, "DTV_RIGHT_K" },
+        { ConsoleKey.Enter, "DTV_ENTER_K" },
+        { ConsoleKey.I, "DTV_INFO_K" },
+        { ConsoleKey.Backspace, "DTV_RETURN_K" },
+        { ConsoleKey.X, "DTV_EXIT_K" },
+        { ConsoleKey.F1, "DTV_RED_K" },
+        { ConsoleKey.F2, "DTV_GREEN_K" },
+        { ConsoleKey.F3, "DTV_YELLOW_K" },
+        { ConsoleKey.F4, "DTV_BLUE_K" },
+        { ConsoleKey.Q, "SPE_MORE_K" },
+        { ConsoleKey.OemComma, "DTV_REWIND_K" },
+        { ConsoleKey.OemPeriod, "DTV_FF_K" },
+        { ConsoleKey.O, "DTV_PAUSE_K" },
+        { ConsoleKey.R, "DTV_REC_K" },
+        { ConsoleKey.P, "DTV_PLAY_K" },
+        { ConsoleKey.Z, "DTV_STOP_K" },
+        { ConsoleKey.F, "DTV_FACTORY_K" },
     };
 
     static void Main(string[] args)
@@ -90,6 +110,9 @@ class RedRat3ControllerCLI
     {
         if (!(RRUtil.GetDefaultUsbRedRat() is IRedRat3 rr3))
         {
+            Console.WriteLine("Unable to find any USB RedRat devices attached to this computer.");
+            Console.WriteLine("Check USB connection and installed driver.");
+
             throw new Exception("Unable to find any USB RedRat devices attached to this computer.");
         }
         Console.WriteLine("RedRat connected.");

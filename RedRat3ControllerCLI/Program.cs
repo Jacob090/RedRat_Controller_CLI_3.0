@@ -68,7 +68,18 @@ class RedRat3ControllerCLI
         }
 
         rr3.Connect();
-        var signalDB = Serializer.AvDeviceDbFromXmlFile("REDRAT.xml");
+
+        XmlDeserializationResult<AVDeviceDB> signalDB;
+        try
+        {
+            signalDB = Serializer.AvDeviceDbFromXmlFile("REDRAT.xml");
+        } catch (Exception e)
+        {
+            Console.WriteLine(e.Message);
+            Console.ReadKey();
+            return;
+        }
+            
         Console.WriteLine("Database initialised.");
 
         Console.WriteLine("Intercepting keys. Press ESC to exit.\n");

@@ -24,7 +24,7 @@ public class AudioWebSocketHandler
             // Stream audio data
             while (webSocket.State == WebSocketState.Open)
             {
-                var audioChunk = _audioService.GetAudioChunk(clientId, 100);
+                var audioChunk = _audioService.GetAudioChunk(clientId, 25);
 
                 if (audioChunk != null)
                 {

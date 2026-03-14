@@ -76,10 +76,8 @@
                         <input type="text" id="commandInput" class="command-input" placeholder="Enter signal name (e.g., DTV_POWER_K)">
                     </div>
                     <div class="available-commands">
-                        <h3>Available Commands:</h3>
-                        <select id="availableCommands" class="commands-dropdown">
-                            <option value="">-- Select a command --</option>
-                        </select>
+                        <h3>Available Commands (click "Assign" to set key):</h3>
+                        <div id="commandsList" class="commands-list"></div>
                     </div>
                 </div>
 
@@ -119,8 +117,8 @@
                             <button id="usbDisconnectBtn" class="btn btn-danger">Disconnect</button>
                         </div>
                         <div class="button-group">
-                            <button id="tvButton" class="btn btn-gray" disabled>TV (MA01)</button>
-                            <button id="pcButton" class="btn btn-gray" disabled>PC (MB01)</button>
+                            <button id="tvButton" class="btn btn-gray" disabled>TV</button>
+                            <button id="pcButton" class="btn btn-gray" disabled>PC</button>
                         </div>
                     </div>
                 </div>
@@ -129,6 +127,12 @@
                 <div class="control-section">
                     <h2>🔊 Audio Streaming</h2>
                     <div class="audio-controls">
+                        <div class="control-row">
+                            <label for="audioDeviceSelect">Microphone:</label>
+                            <select id="audioDeviceSelect" class="port-select camera-select">
+                                <option>Loading microphones...</option>
+                            </select>
+                        </div>
                         <button id="audioStartBtn" class="btn btn-success">Start Audio</button>
                         <button id="audioStopBtn" class="btn btn-danger">Stop Audio</button>
                         <div class="volume-control">

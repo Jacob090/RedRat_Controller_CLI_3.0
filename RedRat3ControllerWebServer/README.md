@@ -1,142 +1,155 @@
-# RedRat3 Controller - Web Interface
+# RedRat3 Controller Web Server
 
-Prosta aplikacja webowa do sterowania urządzeniami RedRat3, kamerą i portami COM przez przeglądarkę.
-
-## Szybki start (Debug)
-
-### 1. Uruchomienie
-Otwórz terminal i wpisz:
-```bash
-cd RedRat3ControllerWebServer
-dotnet run
-```
-
-### 2. Otwórz przeglądarkę
-Wpisz: `http://localhost:5000`
+Aplikacja webowa do sterowania RedRat3, kamerą, przełącznikami COM i audio przez przeglądarkę. Serwer działa na jednym komputerze, a sterowanie odbywa się przez stronę w dowolnym komputerze w sieci.
 
 ---
 
-## Jak używać
+## Wymagania sprzętowe
 
-### Sterowanie IR (RedRat3)
-Steruj pilotem w dwóch sposobach:
+**Wymagane:**
+- RedRat3 podlaczony przez USB
+- Plik REDRAT.xml w katalogu RedRat3ControllerWebServer
 
-**Sposób 1 - Kliknij przyciski:**
-- Kliknij dowolny przycisk na ekranie (Power, Menu, Numery, itp.)
+**Opcjonalne:**
+- Kamera (do podgladu na zywo)
+- Przełącznik zasilania na porcie COM (115200 baud)
+- Przełącznik USB na porcie COM (9600 baud) - zmiana TV/PC
+- Mikrofon (do strumieniowania audio)
 
-**Sposób 2 - Użyj klawiatury (szybciej!):**
-- `P` = Power
-- `M` = Menu
-- `V` = Mute
-- `X` = Exit
-- `0-9` = Numery
-- `Strzałki` = Nawigacja
-- `Enter` = OK
-- `+` / `-` = Głośność
-- `Page Up/Down` = Kanały
-- `F1` = Czerwony, `F2` = Zielony, `F3` = Żółty, `F4` = Niebieski
+---
 
-### Kamera
-1. Wybierz kamerę z listy
-2. Kliknij "Start"
-3. Obraz pojawi się po lewej stronie
+## Uruchomienie
 
-### Power Switch (Port COM)
-1. Wybierz port COM
-2. Kliknij "Connect"
-3. Użyj przycisków ON/OFF
+### Na tym samym komputerze
+
+1. Otwórz terminal w katalogu projektu
+2. Wpisz: `cd RedRat3ControllerWebServer`
+3. Wpisz: `dotnet run`
+4. Otwórz przegladarke i wpisz: `http://localhost:5202`
+
+### Sterowanie z innego komputera w sieci
+
+1. Uruchom serwer na komputerze z podlaczonymi urzadzeniami (jak wyzej)
+2. Sprawdz adres IP komputera - w terminalu wpisz: `ipconfig` i znajdz "IPv4 Address" (np. 192.168.1.100)
+3. Dodaj regule firewalla na komputerze z serwerem (uruchom CMD jako Administrator):
+   ```
+   netsh advfirewall firewall add rule name="RedRat Web Server" dir=in action=allow protocol=TCP localport=5202
+   ```
+4. Na drugim komputerze otwórz przegladarke i wpisz: `http://ADRES_IP:5202` (np. http://192.168.1.20:5202)
+
+Serwer nasluchuje na porcie 5202 (domyslnie). Wszystkie urzadzenia musza byc podlaczone do komputera z uruchomionym serwerem.
+
+---
+
+## Manual funkcji
+
+### Device Status
+
+Pokazuje stan polaczenia kazdego urzadzenia: RedRat3, port szeregowy, przełącznik USB, kamera, audio. Odswieza sie automatycznie.
+
+---
+
+### RedRat3 IR Control
+
+Wysylanie sygnalow podczerwieni do TV lub innego urzadzenia przez RedRat3.
+
+**Pole Send IR Command:**
+- Przyciski przypisane do komend wysylaja od razu po wcisnieciu
+
+**Lista dostepnych komend:**
+- Lista wszystkich mozliwych sygnalow IR
+- Przycisk Assign przy kazdej komendzie - kliknij, nastepnie wcisnij klawisz do przypisania
+- Przypisania zapisuja sie w przegladarce i zostaja po ponownym otwarciu strony
+- Escape podczas przypisywania anuluje
+
+**Domyslne przypisania klawiszy:**
+- P = Power, M = Menu, V = Mute, X = Exit
+- 0-9 = Numery, Strzalki = Nawigacja
+- Enter = OK
+- +/- = Glosnosc, PageUp/PageDown = Kanal
+- F1-F4 = Przyciski kolorowe (czerwony, zielony, zolty, niebieski)
+
+---
+
+### Power Switch
+
+Sterowanie urzadzeniem na porcie COM (np. przelacznik zasilania).
+
+1. Wybierz port COM z listy
+2. Kliknij Connect
+3. Przycisk ON wysyla 1, przycisk OFF wysyla 0
+4. Polaczenie: 115200 baud, 8N1
+
+---
 
 ### USB Switch
-1. Wybierz port COM
-2. Kliknij "Connect"
-3. Użyj przycisków TV/PC
+
+Zmiana urzadzenia TV/PC na przelaczniku USB.
+
+1. Wybierz port COM (inny niz Power Switch)
+2. Kliknij Connect
+3. Przycisk TV wysyla MA01, przycisk PC wysyla MB01
+4. Polaczenie: 9600 baud
+
+---
+
+### Camera Feed
+
+Transmisja obrazu z kamery na zywo.
+
+1. Wybierz kamere z listy
+2. Kliknij Start
+3. Obraz pojawia sie po lewej stronie
+4. Kliknij Stop aby zatrzymac
+
+---
 
 ### Audio Streaming
-1. Kliknij "Start Audio"
-2. Użyj suwaka do regulacji głośności
-3. Kliknij "Mute" aby wyciszyć
+
+Transmisja dzwieku z mikrofonu do przegladarki.
+
+1. Wybierz mikrofon z listy
+2. Kliknij Start Audio
+3. Suwak Volume reguluje glosnosc (0-100%)
+4. Przycisk Mute wylacza dzwiek
+5. Kliknij Stop Audio aby zatrzymac
 
 ---
 
-## Dostęp z innego komputera
+### Action History
 
-### 1. Znajdź IP adresu
-Wpisz w terminalu:
-```bash
-ipconfig
-```
-Szukaj "IPv4 Address" (np. 192.168.1.100)
-
-### 2. Otwórz firewall
-Uruchom jako Administrator:
-```bash
-netsh advfirewall firewall add rule name="RedRat Web Server" dir=in action=allow protocol=TCP localport=5000
-```
-
-### 3. Otwórz przeglądarkę
-Na innym komputerze w tej samej sieci wpisz np (ip komputera + :5000):
-```
-http://192.168.1.100:5000
-```
+Lista ostatnich akcji z timestampami: wyslane sygnaly IR, polaczenia portow, operacje kamery i audio. Przycisk Clear History czyści liste.
 
 ---
 
-## Wymagane sprzęt
+## Release (plik exe)
 
-- Kamera podłączona do komputera
-- Urządzenie RedRat3 (podłączone przez USB)
-- Opcjonalnie: urządzenia na portach COM (Power_Switch, USB_Switch)
+**Budowanie release:**
+1. Uruchom `BuildRelease.bat` w folderze RedRat3ControllerWebServer
+2. Wynik bedzie w podfolderze `Release`
 
----
+**Uruchomienie przez exe:**
+1. Wejdz do folderu Release
+2. Uruchom `RedRat3ControllerWebServer.exe
+3. Otwórz przegladarke i wpisz `http://localhost:5202`
+4. Aby sterowac z innego komputera - dodaj regule firewalla (CMD jako Administrator):
+   ```
+   netsh advfirewall firewall add rule name="RedRat Web Server" dir=in action=allow protocol=TCP localport=5202
+   ```
+5. Na drugim komputerze wpisz w przegladarce: `http://ADRES_IP:5202` (adres IP komputera z uruchomionym exe)
 
-## Zatrzymanie
-
-W terminalu wciśnij `Ctrl+C`
-
----
-
-## Problemy
-
-### Kamera nie działa
-- Sprawdź czy nie jest używana przez inny program
-- Spróbuj innej kamery z listy
-
-### Nie mogę połączyć z innego komputera
-- Sprawdź firewall
-- Sprawdź czy oba komputery są w tej samej sieci
-- Sprawdź IP adres
-
-### RedRat3 nie działa
-- Sprawdź czy urządzenie jest podłączone przez USB
-- Sprawdź czy plik REDRAT.xml istnieje w katalogu projektu
+Wymaga .NET 8.0 na komputerze docelowym. Caly folder Release mozna przeniesc na inny komputer.
 
 ---
 
-## Klawisze skrótów - pełna lista
+## Zatrzymanie serwera
 
-```
-P       = Power
-M       = Menu
-V       = Mute
-X       = Exit
-0-9     = Numery
-↑↓←→    = Nawigacja
-Enter   = OK
-+/-     = Głośność
-PgUp    = Kanał +
-PgDn    = Kanał -
-F1      = Czerwony
-F2      = Zielony
-F3      = Żółty
-F4      = Niebieski
-```
+Wcisnij Ctrl+C w terminalu.
 
 ---
 
-## Architektura
+## Wymagania systemowe
 
-- **Backend:** ASP.NET Core 8.0 (działa na komputerze stacjonarnym)
-- **Frontend:** HTML/CSS/JavaScript (działa w przeglądarce)
-- **Komunikacja:** REST API + WebSocket
-
-Wszystkie urządzenia fizyczne są podłączone do komputera stacjonarnego. Przeglądarka steruje nimi przez sieć lokalną.
+- Windows
+- .NET 8.0
+- Przegladarka z obsluga WebSocket (Chrome, Firefox, Edge)

@@ -6,6 +6,7 @@ let statusWebSocket = null;
 let audioWebSocket = null;
 let audioContext = null;
 let audioClientId = null;
+let audioNextPlayTime = 0; // For sequential scheduling - no overlap
 let cameraInterval = null;
 let keyAssignments = [];
 let keyToSignalMap = {};
@@ -227,7 +228,7 @@ function startCameraRefresh() {
     cameraInterval = setInterval(() => {
         const cameraImage = document.getElementById('cameraImage');
         cameraImage.src = `${API_BASE}/api/camera/frame?t=${Date.now()}`;
-    }, 50); // 50ms = 20 FPS for lower latency
+    }, 33); // 33ms ≈ 30 FPS for lower latency, better A/V sync
 }
 
 async function connectSerialPort() {
@@ -406,58 +407,107 @@ async function sendIRSignal(signalName) {
     }
 }
 
-async function startAudio() {
-    const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
-    const wsUrl = `${protocol}//${window.location.host}${API_BASE}/api/websocket/audio`;
-    
+async function loadAudioDevices() {
     try {
+        const response = await fetch(`${API_BASE}/api/audio/devices`);
+        const data = await response.json();
+        const select = document.getElementById('audioDeviceSelect');
+        select.innerHTML = '<option value="">Select microphone...</option>';
+        data.devices.forEach((device, index) => {
+            select.innerHTML += `<option value="${index}">${device}</option>`;
+        });
+    } catch (error) {
+        console.error('Error loading audio devices:', error);
+        document.getElementById('audioDeviceSelect').innerHTML = '<option value="">Failed to load</option>';
+    }
+}
+
+async function startAudio() {
+    const deviceSelect = document.getElementById('audioDeviceSelect');
+    const deviceIndex = parseInt(deviceSelect.value) || 0;
+
+    try {
+        // 1. Start server-side audio capture first
+        const startResponse = await fetch(`${API_BASE}/api/audio/start`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ deviceIndex })
+        });
+        const startData = await startResponse.json();
+        if (!startData.success) {
+            addLogEntry(`Audio error: ${startData.error || 'Failed to start'}`, 'error');
+            return;
+        }
+
+        // 2. Initialize audio context (must be user gesture)
+        audioContext = new (window.AudioContext || window.webkitAudioContext)();
+        audioClientId = Math.random().toString(36).substring(7);
+        audioNextPlayTime = 0;
+
+        // 3. Connect WebSocket to receive stream (pass clientId for volume control)
+        const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+        const wsUrl = `${protocol}//${window.location.host}${API_BASE}/api/websocket/audio?clientId=${encodeURIComponent(audioClientId)}`;
         audioWebSocket = new WebSocket(wsUrl);
         
-        audioWebSocket.onopen = async () => {
-            console.log('Audio WebSocket connected');
-            addLogEntry('Audio streaming started', 'success');
-            
-            // Initialize audio context
-            audioContext = new (window.AudioContext || window.webkitAudioContext)();
-            
-            // Get client ID from the server (we'll generate it locally)
-            audioClientId = Math.random().toString(36).substring(7);
-            
+        audioWebSocket.onopen = () => {
+            addLogEntry(`Audio streaming: ${startData.deviceName}`, 'success');
             loadStatus();
         };
         
         audioWebSocket.onmessage = async (event) => {
-            const audioData = event.data;
-            
-            // Decode and play audio
             try {
-                const audioBuffer = await audioContext.decodeAudioData(audioData);
-                const source = audioContext.createBufferSource();
-                source.buffer = audioBuffer;
-                source.connect(audioContext.destination);
-                source.start();
+                const rawPcm = await event.data.arrayBuffer();
+                playRawPcm(rawPcm);
             } catch (error) {
                 console.error('Error playing audio:', error);
             }
         };
         
-        audioWebSocket.onerror = (error) => {
-            console.error('Audio WebSocket error:', error);
+        audioWebSocket.onerror = () => {
             addLogEntry('Audio streaming error', 'error');
         };
         
         audioWebSocket.onclose = () => {
-            console.log('Audio WebSocket closed');
             addLogEntry('Audio streaming stopped', 'info');
             loadStatus();
         };
     } catch (error) {
         console.error('Error starting audio:', error);
-        addLogEntry('Error starting audio', 'error');
+        addLogEntry(`Error starting audio: ${error.message}`, 'error');
     }
 }
 
-function stopAudio() {
+// Play raw 16-bit stereo PCM at 48000 Hz - proper conversion for clarity
+function playRawPcm(arrayBuffer) {
+    if (!audioContext || arrayBuffer.byteLength < 4) return;
+    
+    const sampleRate = 48000;
+    const dv = new DataView(arrayBuffer);
+    const numSamples = arrayBuffer.byteLength / 2;
+    const numFrames = numSamples / 2; // stereo interleaved
+    
+    const buffer = audioContext.createBuffer(2, numFrames, sampleRate);
+    const left = buffer.getChannelData(0);
+    const right = buffer.getChannelData(1);
+    
+    for (let i = 0; i < numFrames; i++) {
+        const sL = dv.getInt16(i * 4, true);
+        const sR = dv.getInt16(i * 4 + 2, true);
+        left[i] = Math.max(-1, Math.min(1, sL / 32768));
+        right[i] = Math.max(-1, Math.min(1, sR / 32768));
+    }
+    
+    const now = audioContext.currentTime;
+    if (audioNextPlayTime < now) audioNextPlayTime = now;
+    
+    const source = audioContext.createBufferSource();
+    source.buffer = buffer;
+    source.connect(audioContext.destination);
+    source.start(audioNextPlayTime);
+    audioNextPlayTime += buffer.duration;
+}
+
+async function stopAudio() {
     if (audioWebSocket) {
         audioWebSocket.close();
         audioWebSocket = null;
@@ -468,7 +518,12 @@ function stopAudio() {
         audioContext = null;
     }
     
+    try {
+        await fetch(`${API_BASE}/api/audio/stop`, { method: 'POST' });
+    } catch (e) {}
+    
     addLogEntry('Audio streaming stopped', 'info');
+    loadStatus();
 }
 
 function handleVolumeChange() {
@@ -544,6 +599,7 @@ window.addEventListener('beforeunload', () => {
 });
 
 // Keyboard event handler for IR signals
+const KEY_ASSIGNMENTS_STORAGE = 'redrat_key_assignments';
 const keyboardMap = {
     'p': 'DTV_POWER_K', 'P': 'DTV_POWER_K',
     'm': 'DTV_MENU_K', 'M': 'DTV_MENU_K',
@@ -565,6 +621,24 @@ const keyboardMap = {
     'F3': 'DTV_YELLOW_K',
     'F4': 'DTV_BLUE_K'
 };
+
+function loadKeyAssignments() {
+    try {
+        const saved = localStorage.getItem(KEY_ASSIGNMENTS_STORAGE);
+        if (saved) {
+            const parsed = JSON.parse(saved);
+            for (const [key, cmd] of Object.entries(parsed)) {
+                keyboardMap[key] = cmd;
+            }
+        }
+    } catch (e) {}
+}
+
+function saveKeyAssignments() {
+    try {
+        localStorage.setItem(KEY_ASSIGNMENTS_STORAGE, JSON.stringify(keyboardMap));
+    } catch (e) {}
+}
 
 document.addEventListener('keydown', (event) => {
     // Don't handle if typing in input fields
@@ -609,77 +683,150 @@ const availableCommands = [
     'DTV_PLAY_K', 'DTV_STOP_K', 'DTV_FACTORY_K'
 ];
 
-// Load available commands into dropdown with keyboard mappings
-function loadAvailableCommands() {
-    const select = document.getElementById('availableCommands');
-    select.innerHTML = '<option value="">-- Select a command --</option>';
-    
-    // Create a reverse map from signal to key
-    const signalToKeyMap = {};
+// Format key for display
+function formatKeyDisplay(key) {
+    const map = {
+        ' ': 'Space', 'ArrowLeft': '←', 'ArrowRight': '→', 'ArrowUp': '↑', 'ArrowDown': '↓',
+        'Enter': 'Enter', 'Backspace': 'Backspace', 'Escape': 'Esc', 'Tab': 'Tab'
+    };
+    return map[key] || key;
+}
+
+// Get first assigned key for a command
+function getAssignedKey(signalName) {
     for (const [key, signal] of Object.entries(keyboardMap)) {
-        signalToKeyMap[signal] = key;
+        if (signal === signalName) return key;
     }
+    return null;
+}
+
+// Load available commands as read-only list with assign buttons
+function loadAvailableCommands() {
+    const listEl = document.getElementById('commandsList');
+    listEl.innerHTML = '';
     
     availableCommands.sort().forEach(command => {
-        const assignedKey = signalToKeyMap[command] || 'N/A';
-        const displayKey = assignedKey === ' ' ? 'Space' : 
-                         assignedKey === 'ArrowLeft' ? '←' :
-                         assignedKey === 'ArrowRight' ? '→' :
-                         assignedKey === 'ArrowUp' ? '↑' :
-                         assignedKey === 'ArrowDown' ? '↓' :
-                         assignedKey === 'Enter' ? 'Enter' :
-                         assignedKey === 'Backspace' ? 'Backspace' :
-                         assignedKey === 'Escape' ? 'Escape' :
-                         assignedKey === 'Tab' ? 'Tab' :
-                         assignedKey === '+' ? '+' :
-                         assignedKey === '-' ? '-' :
-                         assignedKey === '*' ? '*' :
-                         assignedKey === '/' ? '/' :
-                         assignedKey;
+        const assignedKey = getAssignedKey(command);
+        const displayKey = assignedKey ? formatKeyDisplay(assignedKey) : '—';
         
-        select.innerHTML += `<option value="${command}">${command} (Key: ${displayKey})</option>`;
+        const item = document.createElement('div');
+        item.className = 'command-item';
+        item.dataset.command = command;
+        item.innerHTML = `
+            <span class="command-item-name" title="${command}">${command}</span>
+            <span class="command-item-key">${displayKey}</span>
+            <button type="button" class="command-item-assign">Assign</button>
+        `;
+        
+        item.querySelector('.command-item-assign').addEventListener('click', () => startKeyAssignment(item, command));
+        listEl.appendChild(item);
     });
 }
 
-// Send command on Enter key
-document.getElementById('commandInput').addEventListener('keypress', async (event) => {
-    if (event.key === 'Enter') {
+let keyAssignmentCallback = null;
+
+function startKeyAssignment(itemEl, command) {
+    if (keyAssignmentCallback) return;
+    
+    const btn = itemEl.querySelector('.command-item-assign');
+    btn.textContent = 'Press key...';
+    btn.classList.add('listening');
+    
+    keyAssignmentCallback = (event) => {
         event.preventDefault();
-        const commandInput = document.getElementById('commandInput');
-        const signalName = commandInput.value.trim();
+        event.stopPropagation();
+        const key = event.key;
         
-        if (!signalName) {
-            addLogEntry('Please enter a signal name', 'error');
+        if (key === 'Escape') {
+            cancelKeyAssignment();
             return;
         }
         
-        await sendIRSignal(signalName);
-        addLogEntry(`Sent IR signal: ${signalName}`, 'success');
-        commandInput.value = '';
-    }
-});
+        // Remove key from previous command
+        if (keyboardMap[key]) {
+            delete keyboardMap[key];
+        }
+        keyboardMap[key] = command;
+        saveKeyAssignments();
+        
+        btn.textContent = 'Assign';
+        btn.classList.remove('listening');
+        document.removeEventListener('keydown', keyAssignmentCallback);
+        keyAssignmentCallback = null;
+        
+        itemEl.querySelector('.command-item-key').textContent = formatKeyDisplay(key);
+        addLogEntry(`Assigned ${formatKeyDisplay(key)} → ${command}`, 'info');
+    };
+    
+    document.addEventListener('keydown', keyAssignmentCallback, { once: false });
+}
 
-// Insert selected command into input field when dropdown changes
-document.getElementById('availableCommands').addEventListener('change', () => {
-    const select = document.getElementById('availableCommands');
+function cancelKeyAssignment() {
+    if (keyAssignmentCallback) {
+        document.removeEventListener('keydown', keyAssignmentCallback);
+        keyAssignmentCallback = null;
+    }
+    document.querySelectorAll('.command-item-assign.listening').forEach(btn => {
+        btn.textContent = 'Assign';
+        btn.classList.remove('listening');
+    });
+}
+
+// Send command on mapped keys; block unassigned keys from typing
+function setupCommandInput() {
     const commandInput = document.getElementById('commandInput');
     
-    if (select.value) {
-        commandInput.value = select.value;
-        commandInput.focus();
-    }
-});
+    commandInput.addEventListener('keydown', async (event) => {
+        const key = event.key;
+        
+        // Enter - send full command name if typed, otherwise DTV_ENTER_K
+        if (key === 'Enter') {
+            event.preventDefault();
+            const signalName = commandInput.value.trim();
+            if (signalName) {
+                await sendIRSignal(signalName);
+                addLogEntry(`Sent IR signal: ${signalName}`, 'success');
+                commandInput.value = '';
+            } else {
+                await sendIRSignal('DTV_ENTER_K');
+                addLogEntry(`Sent IR signal: DTV_ENTER_K`, 'success');
+            }
+            return;
+        }
+        
+        // Mapped key - execute immediately, don't type
+        if (keyboardMap[key]) {
+            event.preventDefault();
+            const signalName = keyboardMap[key];
+            await sendIRSignal(signalName);
+            addLogEntry(`Sent IR signal: ${signalName}`, 'success');
+            commandInput.value = '';
+            return;
+        }
+        
+        // Key that would type a character but is NOT assigned - block it
+        if (key.length === 1 && !event.ctrlKey && !event.metaKey && !event.altKey) {
+            event.preventDefault();
+            return;
+        }
+        
+        // Allow: Backspace, Delete, Ctrl+V (paste), Ctrl+A, Ctrl+C, etc.
+        // Arrow keys are in keyboardMap so they execute - that's intentional
+    });
+}
 
 // Initialize on app load
 async function initializeApp() {
     try {
-        // Load available commands
+        loadKeyAssignments();
+        setupCommandInput();
         loadAvailableCommands();
         
         // Load initial data
         await loadStatus();
         await loadSerialPorts();
         await loadCameras();
+        await loadAudioDevices();
         
         // Setup WebSocket for status updates
         connectStatusWebSocket();

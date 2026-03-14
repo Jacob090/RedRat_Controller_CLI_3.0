@@ -38,7 +38,7 @@ public class WebSocketController : ControllerBase
         if (HttpContext.WebSockets.IsWebSocketRequest)
         {
             var webSocket = await HttpContext.WebSockets.AcceptWebSocketAsync();
-            string clientId = Guid.NewGuid().ToString();
+            string clientId = HttpContext.Request.Query["clientId"].FirstOrDefault() ?? Guid.NewGuid().ToString();
             await _audioWebSocketHandler.HandleWebSocketAsync(webSocket, clientId);
         }
         else

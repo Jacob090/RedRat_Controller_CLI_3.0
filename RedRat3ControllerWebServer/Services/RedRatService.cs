@@ -82,7 +82,7 @@ public class RedRatService
     {
         if (!(RRUtil.GetDefaultUsbRedRat() is IRedRat3 rr))
         {
-            throw new Exception("Unable to find any USB RedRat devices attached to this computer.");
+            throw new Exception("Unable to find any USB RedRat");
         }
         return rr;
     }

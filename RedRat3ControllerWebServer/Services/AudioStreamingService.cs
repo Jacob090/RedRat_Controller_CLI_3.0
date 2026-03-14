@@ -54,12 +54,13 @@ public class AudioStreamingService
                 waveIn = new WaveInEvent
                 {
                     DeviceNumber = deviceIndex,
-                    WaveFormat = new WaveFormat(44100, 16, 2) // 44.1kHz, 16-bit, stereo
+                    WaveFormat = new WaveFormat(48000, 16, 2),
+                    BufferMilliseconds = 100,
+                    NumberOfBuffers = 4
                 };
 
                 waveIn.DataAvailable += WaveIn_DataAvailable;
                 waveIn.RecordingStopped += WaveIn_RecordingStopped;
-                
                 waveIn.StartRecording();
                 isStreaming = true;
                 
@@ -98,41 +99,38 @@ public class AudioStreamingService
 
     private void WaveIn_DataAvailable(object? sender, WaveInEventArgs e)
     {
-        // Distribute audio data to all connected clients
+        int bytesToSend = e.BytesRecorded;
+        if (bytesToSend <= 0) return;
+
         lock (clientsLock)
         {
             foreach (var clientId in clients.Keys.ToList())
             {
                 var (queue, volume) = clients[clientId];
-                
                 try
                 {
-                    // Apply volume control
+                    byte[] dataToSend;
                     if (volume < 100)
                     {
-                        float volumeFactor = volume / 100.0f;
-                        byte[] adjustedBuffer = new byte[e.Buffer.Length];
-                        
-                        for (int i = 0; i < e.Buffer.Length; i += 2)
+                        float vol = volume / 100.0f;
+                        dataToSend = new byte[bytesToSend];
+                        for (int i = 0; i < bytesToSend; i += 2)
                         {
-                            short sample = BitConverter.ToInt16(e.Buffer, i);
-                            sample = (short)(sample * volumeFactor);
-                            byte[] bytes = BitConverter.GetBytes(sample);
-                            adjustedBuffer[i] = bytes[0];
-                            adjustedBuffer[i + 1] = bytes[1];
+                            short s = BitConverter.ToInt16(e.Buffer, i);
+                            s = (short)(s * vol);
+                            var b = BitConverter.GetBytes(s);
+                            dataToSend[i] = b[0];
+                            dataToSend[i + 1] = b[1];
                         }
-                        
-                        queue.TryAdd(adjustedBuffer);
                     }
                     else
                     {
-                        queue.TryAdd(e.Buffer.ToArray());
+                        dataToSend = new byte[bytesToSend];
+                        Array.Copy(e.Buffer, 0, dataToSend, 0, bytesToSend);
                     }
+                    queue.TryAdd(dataToSend);
                 }
-                catch
-                {
-                    // Client queue might be full or closed
-                }
+                catch { }
             }
         }
     }
@@ -150,7 +148,7 @@ public class AudioStreamingService
     {
         lock (clientsLock)
         {
-            var queue = new BlockingCollection<byte[]>(1000); // Buffer up to 1000 frames
+            var queue = new BlockingCollection<byte[]>(20); // Buffer for network jitter - avoid dropouts
             clients[clientId] = (queue, 100); // Default volume 100%
             return clientId;
         }
@@ -181,7 +179,7 @@ public class AudioStreamingService
         }
     }
 
-    public byte[]? GetAudioChunk(string clientId, int timeoutMs = 100)
+    public byte[]? GetAudioChunk(string clientId, int timeoutMs = 25)
     {
         lock (clientsLock)
         {

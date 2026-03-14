@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>RedRat3 Controller - Web Interface</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>RedRat3 Controller Web Interface</h1>
+            <div class="status-bar">
+                <span id="connectionStatus" class="status-indicator disconnected">● Disconnected</span>
+            </div>
+        </header>
+
+        <div class="main-content">
+            <!-- Left Panel - Camera -->
+            <div class="left-panel">
+                <div class="camera-section">
+                    <h2>📹 Camera Feed</h2>
+                    <div class="camera-controls">
+                        <label for="cameraSelect">Camera:</label>
+                        <select id="cameraSelect" class="camera-select">
+                            <option>Loading cameras...</option>
+                        </select>
+                        <button id="cameraStartBtn" class="btn btn-primary">Start</button>
+                        <button id="cameraStopBtn" class="btn btn-danger">Stop</button>
+                    </div>
+                    <div class="camera-feed">
+                        <img id="cameraImage" src="/api/camera/frame" alt="Camera Feed" />
+                    </div>
+                </div>
+            </div>
+
+            <!-- Right Panel - Controls -->
+            <div class="right-panel">
+                <!-- Status Section -->
+                <div class="status-section">
+                    <h2>📊 Device Status</h2>
+                    <div class="status-grid">
+                        <div class="status-item">
+                            <span class="status-label">RedRat3:</span>
+                            <span id="redRatStatus" class="status-value">Connecting...</span>
+                        </div>
+                        <div class="status-item">
+                            <span class="status-label">Serial Port:</span>
+                            <span id="serialStatus" class="status-value">Disconnected</span>
+                        </div>
+                        <div class="status-item">
+                            <span class="status-label">USB Switch:</span>
+                            <span id="usbSwitchStatus" class="status-value">Disconnected</span>
+                        </div>
+                        <div class="status-item">
+                            <span class="status-label">Camera:</span>
+                            <span id="cameraStatus" class="status-value">Stopped</span>
+                        </div>
+                        <div class="status-item">
+                            <span class="status-label">Audio:</span>
+                            <span id="audioStatus" class="status-value">Stopped</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- RedRat IR Controls -->
+                <div class="control-section">
+                    <div class="ir-header">
+                        <h2>📡 RedRat3 IR Control</h2>
+                    </div>
+                    <div class="keyboard-hint">
+                        💡 Press keys on your keyboard to send IR signals
+                    </div>
+                    <div class="command-input-container">
+                        <label for="commandInput">Send IR Command:</label>
+                        <input type="text" id="commandInput" class="command-input" placeholder="Enter signal name (e.g., DTV_POWER_K)">
+                    </div>
+                    <div class="available-commands">
+                        <h3>Available Commands:</h3>
+                        <select id="availableCommands" class="commands-dropdown">
+                            <option value="">-- Select a command --</option>
+                        </select>
+                    </div>
+                </div>
+
+                <!-- Serial Port Controls -->
+                <div class="control-section">
+                    <h2>🔌 Power Switch (COM Port)</h2>
+                    <div class="serial-controls">
+                        <div class="control-row">
+                            <label for="serialPortSelect">Port:</label>
+                            <select id="serialPortSelect" class="port-select">
+                                <option>Loading ports...</option>
+                            </select>
+                        </div>
+                        <div class="button-group">
+                            <button id="serialConnectBtn" class="btn btn-success">Connect</button>
+                            <button id="serialDisconnectBtn" class="btn btn-danger">Disconnect</button>
+                        </div>
+                        <div class="button-group">
+                            <button id="onButton" class="btn btn-green" disabled>ON</button>
+                            <button id="offButton" class="btn btn-red" disabled>OFF</button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- USB Switch Controls -->
+                <div class="control-section">
+                    <h2>🔄 USB Switch</h2>
+                    <div class="usb-switch-controls">
+                        <div class="control-row">
+                            <label for="usbSwitchSelect">Port:</label>
+                            <select id="usbSwitchSelect" class="port-select">
+                                <option>Loading ports...</option>
+                            </select>
+                        </div>
+                        <div class="button-group">
+                            <button id="usbConnectBtn" class="btn btn-success">Connect</button>
+                            <button id="usbDisconnectBtn" class="btn btn-danger">Disconnect</button>
+                        </div>
+                        <div class="button-group">
+                            <button id="tvButton" class="btn btn-gray" disabled>TV (MA01)</button>
+                            <button id="pcButton" class="btn btn-gray" disabled>PC (MB01)</button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Audio Controls -->
+                <div class="control-section">
+                    <h2>🔊 Audio Streaming</h2>
+                    <div class="audio-controls">
+                        <button id="audioStartBtn" class="btn btn-success">Start Audio</button>
+                        <button id="audioStopBtn" class="btn btn-danger">Stop Audio</button>
+                        <div class="volume-control">
+                            <label for="volumeSlider">Volume:</label>
+                            <input type="range" id="volumeSlider" min="0" max="100" value="100">
+                            <span id="volumeValue">100%</span>
+                            <button id="muteBtn" class="btn btn-small">Mute</button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Action History -->
+                <div class="control-section">
+                    <h2>📋 Action History</h2>
+                    <div id="actionHistory" class="action-history">
+                        <div class="log-entry">Waiting for actions...</div>
+                    </div>
+                    <button id="clearHistoryBtn" class="btn btn-small">Clear History</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="app.js"></script>
+</body>
+</html>
